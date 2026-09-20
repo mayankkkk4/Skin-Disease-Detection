@@ -234,7 +234,7 @@ Mayank Patel
 GitHub:
 
 ```text
-(https://github.com/mayankkkk4)
+https://github.com/mayankkkk4
 ```
 
 ## 📄 License
