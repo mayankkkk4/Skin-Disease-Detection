@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DermoAI - Advanced Skin Disease Detection & Diagnostics</title>
+    <meta name="description" content="AI-powered dermatoscopic skin disease detection system leveraging Ensemble CNN models (VGG16, InceptionV3, DenseNet) for classification of 7 skin lesion types.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Main Application Wrapper -->
+    <div class="app-container">
+        
+        <!-- Header Bar -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="brand-logo">
+                    <div class="logo-icon"><i class="fa-solid fa-microscope"></i></div>
+                    <div class="logo-text">
+                        <span class="brand-name">DermoAI <span class="brand-badge">Pro</span></span>
+                        <span class="brand-sub">Skin Disease Neural Diagnostics</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-center">
+                <nav class="app-nav">
+                    <button class="nav-btn active" data-tab="detector-tab">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> AI Detector
+                    </button>
+                    <button class="nav-btn" data-tab="library-tab">
+                        <i class="fa-solid fa-book-medical"></i> Disease Library
+                    </button>
+                    <button class="nav-btn" data-tab="benchmark-tab">
+                        <i class="fa-solid fa-chart-line"></i> Model Benchmarks
+                    </button>
+                    <button class="nav-btn" data-tab="history-tab">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Scan History
+                    </button>
+                </nav>
+            </div>
+
+            <div class="header-right">
+                <div class="model-select-wrapper">
+                    <label for="modelSelect"><i class="fa-solid fa-brain"></i> Architecture:</label>
+                    <select id="modelSelect" class="model-dropdown">
+                        <option value="Ensemble" selected>Ensemble (VGG16 + Inception + DenseNet)</option>
+                        <option value="VGG16">VGG16 Neural Network</option>
+                        <option value="DenseNet201">DenseNet201 Network</option>
+                        <option value="InceptionV3">InceptionV3 Network</option>
+                        <option value="Basic_CNN">Custom 3-Layer CNN</option>
+                    </select>
+                </div>
+                <div class="status-pill green-glow">
+                    <span class="status-dot"></span> AI Engine Ready
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Viewport -->
+        <main class="app-content">
+            
+            <!-- TAB 1: AI DETECTOR WORKSPACE -->
+            <section id="detector-tab" class="tab-pane active">
+                <div class="workspace-grid">
+                    
+                    <!-- Left Panel: Input & Image Canvas -->
+                    <div class="panel glass-panel input-panel">
+                        <div class="panel-header">
+                            <h2><i class="fa-solid fa-cloud-arrow-up"></i> Image Input Workspace</h2>
+                            <span class="panel-tag">HAM10000 7-Class Model</span>
+                        </div>
+
+                        <!-- Dropzone Uploader -->
+                        <div id="dropzone" class="dropzone-area">
+                            <input type="file" id="fileInput" accept="image/*" class="file-input-hidden">
+                            <div class="dropzone-content">
+                                <div class="upload-icon-pulse">
+                                    <i class="fa-solid fa-circle-arrow-up"></i>
+                                </div>
+                                <h3>Drag & Drop Dermatoscopic Image</h3>
+                                <p>Supports JPG, PNG, WEBP high-res lesion photos</p>
+                                <div class="upload-actions">
+                                    <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                                        <i class="fa-solid fa-folder-open"></i> Browse File
+                                    </button>
+                                    <button class="btn btn-secondary" id="webcamBtn">
+                                        <i class="fa-solid fa-camera"></i> Live Camera
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sample Test Images Bar -->
+                        <div class="sample-section">
+                            <div class="sample-title">
+                                <span><i class="fa-solid fa-flask"></i> Quick Demo Test Samples:</span>
+                                <small>Click any sample to test immediately</small>
+                            </div>
+                            <div id="samplesContainer" class="samples-scroll">
+                                <div class="sample-skeleton">Loading samples...</div>
+                            </div>
+                        </div>
+
+                        <!-- Image Preview & Canvas Controls -->
+                        <div id="previewWrapper" class="preview-wrapper hidden">
+                            <div class="preview-header">
+                                <span><i class="fa-solid fa-image"></i> Active Image Analysis</span>
+                                <div class="canvas-toggles">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="heatmapToggle">
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-label"><i class="fa-solid fa-fire"></i> Lesion Heatmap</span>
+                                    </label>
+                                    <button id="clearImgBtn" class="btn-icon" title="Clear Image">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="canvas-container">
+                                <img id="imagePreview" src="" alt="Skin lesion preview">
+                                <canvas id="heatmapCanvas" class="heatmap-overlay"></canvas>
+                            </div>
+                            
+                            <div class="preview-footer">
+                                <button id="analyzeBtn" class="btn btn-accent btn-glow full-width">
+                                    <i class="fa-solid fa-bolt"></i> Run AI Disease Diagnosis
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel: AI Results Dashboard -->
+                    <div class="panel glass-panel results-panel">
+                        <div class="panel-header">
+                            <h2><i class="fa-solid fa-square-poll-vertical"></i> Diagnostic Report</h2>
+                            <button id="printReportBtn" class="btn btn-sm btn-outline hidden">
+                                <i class="fa-solid fa-print"></i> Export Report
+                            </button>
+                        </div>
+
+                        <!-- Initial Empty State -->
+                        <div id="emptyState" class="empty-state">
+                            <div class="empty-illustration">
+                                <i class="fa-solid fa-heart-pulse"></i>
+                            </div>
+                            <h3>Awaiting Lesion Analysis</h3>
+                            <p>Upload a skin lesion image or select a sample image from the workspace to view real-time AI classification probabilities, risk assessment, and clinical recommendations.</p>
+                        </div>
+
+                        <!-- Loading Animation State -->
+                        <div id="loadingState" class="loading-state hidden">
+                            <div class="dna-spinner">
+                                <div class="double-bounce1"></div>
+                                <div class="double-bounce2"></div>
+                            </div>
+                            <h3>Evaluating Deep Neural Network...</h3>
+                            <p id="loadingMsg">Running ensemble inference across VGG16, InceptionV3, and DenseNet201 architectures...</p>
+                        </div>
+
+                        <!-- Results Content Viewport -->
+                        <div id="resultsContent" class="results-content hidden">
+                            
+                            <!-- Top Diagnosis Card -->
+                            <div class="prediction-card">
+                                <div class="prediction-top">
+                                    <div class="disease-meta">
+                                        <span class="prediction-label">Primary Diagnosis</span>
+                                        <h1 id="resDiseaseName">Melanoma</h1>
+                                        <p id="resFullDiseaseName" class="disease-full-name">Malignant Melanocytic Cancer</p>
+                                    </div>
+                                    <div class="risk-badge-wrapper">
+                                        <div id="resRiskBadge" class="risk-badge high-risk">
+                                            <span id="resRiskLevel">High Risk</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="prediction-confidence">
+                                    <div class="confidence-header">
+                                        <span>Ensemble Confidence Match</span>
+                                        <strong id="resConfidenceVal">94.8%</strong>
+                                    </div>
+                                    <div class="confidence-bar-bg">
+                                        <div id="resConfidenceBar" class="confidence-bar-fill" style="width: 94.8%;"></div>
+                                    </div>
+                                </div>
+
+                                <div id="resRiskAlert" class="risk-alert-box alert-danger">
+                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                    <span id="resRiskDesc">Immediate dermatological evaluation recommended.</span>
+                                </div>
+                            </div>
+
+                            <!-- 7-Class Probability Distribution List -->
+                            <div class="breakdown-section">
+                                <h3><i class="fa-solid fa-chart-simple"></i> 7-Class Probability Breakdown</h3>
+                                <div id="breakdownList" class="breakdown-list">
+                                    <!-- Rendered dynamically via JS -->
+                                </div>
+                            </div>
+
+                            <!-- Clinical Information Accordion Tabs -->
+                            <div class="clinical-details-box">
+                                <div class="details-tabs">
+                                    <button class="detail-tab-btn active" data-target="detail-symptoms">
+                                        <i class="fa-solid fa-stethoscope"></i> Symptoms
+                                    </button>
+                                    <button class="detail-tab-btn" data-target="detail-recommendations">
+                                        <i class="fa-solid fa-user-doctor"></i> Actions
+                                    </button>
+                                    <button class="detail-tab-btn" data-target="detail-locations">
+                                        <i class="fa-solid fa-location-dot"></i> Common Sites
+                                    </button>
+                                </div>
+
+                                <div id="detail-symptoms" class="detail-pane active">
+                                    <ul id="resSymptomsList" class="checklist">
+                                        <!-- Symptoms populated dynamically -->
+                                    </ul>
+                                </div>
+
+                                <div id="detail-recommendations" class="detail-pane hidden">
+                                    <ul id="resRecommendationsList" class="checklist action-list">
+                                        <!-- Recommendations populated dynamically -->
+                                    </ul>
+                                </div>
+
+                                <div id="detail-locations" class="detail-pane hidden">
+                                    <div id="resLocationsTags" class="tag-cloud">
+                                        <!-- Locations populated dynamically -->
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- TAB 2: DISEASE KNOWLEDGE LIBRARY -->
+            <section id="library-tab" class="tab-pane hidden">
+                <div class="library-container">
+                    <div class="section-title">
+                        <h2><i class="fa-solid fa-book-medical"></i> Dermatological Conditions Knowledge Base</h2>
+                        <p>Detailed medical breakdown, symptoms, risk factors, and microscopic features for all 7 skin diseases classified in the HAM10000 dataset.</p>
+                    </div>
+
+                    <!-- Library Filter & Search Controls -->
+                    <div class="filter-bar">
+                        <div class="search-box">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="librarySearchInput" placeholder="Search skin disease by name, code, or keyword...">
+                        </div>
+                        <div class="filter-chips">
+                            <button class="filter-chip active" data-filter="all">All Diseases</button>
+                            <button class="filter-chip" data-filter="High Risk"><i class="fa-solid fa-circle" style="color:var(--risk-high);"></i> High Risk</button>
+                            <button class="filter-chip" data-filter="Moderate Risk"><i class="fa-solid fa-circle" style="color:var(--risk-mod);"></i> Moderate Risk</button>
+                            <button class="filter-chip" data-filter="Low Risk"><i class="fa-solid fa-circle" style="color:var(--risk-low);"></i> Low Risk</button>
+                        </div>
+                    </div>
+
+                    <div id="diseaseLibraryGrid" class="library-grid">
+                        <!-- Rendered via JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: MODEL BENCHMARK METRICS -->
+            <section id="benchmark-tab" class="tab-pane hidden">
+                <div class="benchmark-container">
+                    <div class="section-title">
+                        <h2><i class="fa-solid fa-chart-line"></i> Deep Learning Architecture Benchmarks</h2>
+                        <p>Comparative accuracy, loss, and metrics derived from training and validation on 10,015 HAM10000 images.</p>
+                    </div>
+
+                    <!-- Model Metric Overview Cards -->
+                    <div id="metricsGrid" class="metrics-grid">
+                        <!-- Rendered via JS -->
+                    </div>
+
+                    <!-- Confusion Matrix Heatmap Section -->
+                    <div class="panel glass-panel matrix-panel margin-bottom-lg">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-border-all"></i> Ensemble Model Confusion Matrix Visualization</h3>
+                            <span class="panel-tag">Validation Set Evaluation (N=1,002)</span>
+                        </div>
+                        <p class="section-desc">Interactive confusion matrix showing true positive counts (diagonal) vs misclassification distributions across all 7 skin disease classes.</p>
+                        
+                        <div class="matrix-wrapper">
+                            <div id="confusionMatrixContainer" class="matrix-grid-container">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Class Metrics Table -->
+                    <div class="panel glass-panel matrix-panel">
+                        <h3><i class="fa-solid fa-table-cells"></i> HAM10000 7-Class Classification Metrics Breakdown</h3>
+                        <table class="metrics-table">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Disease Title</th>
+                                    <th>Precision</th>
+                                    <th>Recall</th>
+                                    <th>F1-Score</th>
+                                    <th>Support (Count)</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="metricsTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: SCAN HISTORY -->
+            <section id="history-tab" class="tab-pane hidden">
+                <div class="history-container">
+                    <div class="section-title-bar">
+                        <div class="section-title">
+                            <h2><i class="fa-solid fa-clock-rotate-left"></i> Session Diagnostic Scan History</h2>
+                            <p>Review, compare, and export past skin lesion scans performed in this session.</p>
+                        </div>
+                        <div class="history-actions">
+                            <button id="exportCsvBtn" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-file-csv"></i> Export CSV
+                            </button>
+                            <button id="compareSelectedBtn" class="btn btn-primary btn-sm disabled" disabled>
+                                <i class="fa-solid fa-code-compare"></i> Compare Selected (0/2)
+                            </button>
+                            <button id="clearHistoryBtn" class="btn btn-outline-danger btn-sm">
+                                <i class="fa-solid fa-trash-can"></i> Clear History
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="historyList" class="history-grid">
+                        <div class="empty-state">
+                            <i class="fa-solid fa-folder-open"></i>
+                            <p>No scans performed yet in this session. Upload an image to start building scan history.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Disease Detail Modal Drawer -->
+    <div id="diseaseDetailModal" class="modal-overlay hidden">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <span id="modalDiseaseCode" class="modal-code">MEL</span>
+                    <h2 id="modalDiseaseName">Melanoma</h2>
+                </div>
+                <button id="closeDiseaseModalBtn" class="btn-icon"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalDiseaseBadge" class="risk-badge high-risk margin-bottom-sm">
+                    <span id="modalRiskLevel">High Risk</span>
+                </div>
+                <p id="modalRiskDesc" class="modal-desc"></p>
+                
+                <div class="modal-section-grid">
+                    <div class="modal-box">
+                        <h4><i class="fa-solid fa-microscope"></i> Microscopic Features</h4>
+                        <ul id="modalMicroscopicList" class="checklist"></ul>
+                    </div>
+                    <div class="modal-box">
+                        <h4><i class="fa-solid fa-stethoscope"></i> Symptoms & Signs</h4>
+                        <ul id="modalSymptomsList" class="checklist"></ul>
+                    </div>
+                </div>
+
+                <div class="modal-section-grid margin-top-md">
+                    <div class="modal-box">
+                        <h4><i class="fa-solid fa-shield-virus"></i> Risk Factors</h4>
+                        <ul id="modalRiskFactorsList" class="checklist"></ul>
+                    </div>
+                    <div class="modal-box">
+                        <h4><i class="fa-solid fa-user-doctor"></i> Clinical Next Steps</h4>
+                        <ul id="modalRecommendationsList" class="checklist action-list"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compare Scans Modal -->
+    <div id="compareModal" class="modal-overlay hidden">
+        <div class="modal-card modal-xl">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-code-compare"></i> Side-by-Side Lesion Scan Comparison</h3>
+                <button id="closeCompareModalBtn" class="btn-icon"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="compare-grid">
+                    <div id="compareScanA" class="compare-card"></div>
+                    <div id="compareScanB" class="compare-card"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Webcam Modal -->
+    <div id="webcamModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-camera"></i> Live Lesion Camera Capture</h3>
+                <button id="closeWebcamBtn" class="btn-icon"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <video id="webcamVideo" autoplay playsinline></video>
+            </div>
+            <div class="modal-footer">
+                <button id="captureSnapBtn" class="btn btn-accent"><i class="fa-solid fa-circle-dot"></i> Capture Lesion Snapshot</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Printable Report Template Container -->
+    <div id="printableReport" class="printable-report hidden">
+        <div class="print-header">
+            <h1>DermoAI Medical Diagnostic Summary</h1>
+            <p>Automated Dermatoscopic Classification Report</p>
+            <hr>
+        </div>
+        <div class="print-body">
+            <div class="print-row">
+                <strong>Primary Diagnosis:</strong> <span id="printDisease"></span>
+            </div>
+            <div class="print-row">
+                <strong>Confidence Score:</strong> <span id="printConfidence"></span>
+            </div>
+            <div class="print-row">
+                <strong>Risk Category:</strong> <span id="printRisk"></span>
+            </div>
+            <div class="print-row">
+                <strong>Recommended Next Steps:</strong>
+                <ul id="printRecs"></ul>
+            </div>
+        </div>
+        <div class="print-footer">
+            <small>Note: DermoAI is a deep-learning decision support tool. Diagnostic output must be verified by a licensed dermatologist.</small>
+        </div>
+    </div>
+
+    <!-- Custom JS Script -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
